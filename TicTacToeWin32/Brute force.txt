@@ -1,0 +1,406 @@
+#include "AI.h"
+
+
+
+const unsigned int iEmpty = 0;
+const unsigned int iSet_X = 1;
+const unsigned int iSet_O = 2;
+
+
+
+/**
+integer bit field:
+00 00 00 00 00 00 0         0           00 00 00 00 00 00 00 00 00
+                  player    game over   f9 f8 f7 f6 f5 f4 f3 f2 f1
+
+*/
+int processAI (union Views* game)
+{
+   int i = 0, j = 0, tmp; // counter
+   static unsigned int holder = 0;
+   static int offset = 0;
+
+
+   // check if game field is empty, if so, occupy central field:
+   // this is in case if i someday implement "first play" option.
+   for (i = 0; i < FIELDS; i++)
+   {
+      if ((((game->ui_view >> (i * 2)) & PLAYER1X) == EMPTY) ||
+          (((game->ui_view >> (i * 2)) & PLAYER2O) == EMPTY))
+      {
+         break;
+      }
+      if (i == FIELDS - 1)
+      {
+         game->st_view.f5 = SET_O;
+         return 1;
+      }
+   }
+
+
+   // if central field is X and others are empty:
+   tmp = 1;
+   for (i = 0; i < 17; i += 2)
+   {
+      if (i == 8) // skip central position;
+         continue;
+
+      if (((game->ui_view >> i) & PLAYER1X) == EMPTY)
+         continue;
+      else
+      {
+         tmp = 0; // j is 1 if fields are empty;
+         break;
+      }
+   }
+   if ((tmp == 1) && (game->st_view.f5 == PLAYER1X))
+   {
+      srand ((unsigned) time (NULL));
+      while (offset == 8)
+      {
+         offset = ( rand () % 9 ) * 2;
+      }
+      holder = game->ui_view;
+      game->ui_view = game->ui_view >> offset;
+      game->ui_view |=  SET_O;
+      game->ui_view = game->ui_view << offset;
+      game->ui_view |=  holder;
+   }
+
+   // check rows:
+   // first row:
+   if (game->st_view.f1 == EMPTY && game->st_view.f2 == PLAYER2O && game->st_view.f3 == PLAYER2O)
+   { game->st_view.f1 = PLAYER2O; return 1; }
+   if (game->st_view.f1 == PLAYER2O && game->st_view.f2 == EMPTY && game->st_view.f3 == PLAYER2O)
+   { game->st_view.f2 = PLAYER2O; return 1; }
+   if (game->st_view.f1 == PLAYER2O && game->st_view.f2 == PLAYER2O && game->st_view.f3 == EMPTY)
+   { game->st_view.f3 = PLAYER2O; return 1; }
+   // second row:
+   if (game->st_view.f4 == EMPTY && game->st_view.f5 == PLAYER2O && game->st_view.f6 == PLAYER2O)
+   { game->st_view.f4 = PLAYER2O; return 1; }
+   if (game->st_view.f4 == PLAYER2O && game->st_view.f5 == EMPTY && game->st_view.f6 == PLAYER2O)
+   { game->st_view.f5 = PLAYER2O; return 1; }
+   if (game->st_view.f4 == PLAYER2O && game->st_view.f5 == PLAYER2O && game->st_view.f6 == EMPTY)
+   { game->st_view.f6 = PLAYER2O; return 1; }
+   // third row:
+   if (game->st_view.f7 == EMPTY && game->st_view.f8 == PLAYER2O && game->st_view.f9 == PLAYER2O)
+   { game->st_view.f7 = PLAYER2O; return 1; }
+   if (game->st_view.f7 == PLAYER2O && game->st_view.f8 == EMPTY && game->st_view.f9 == PLAYER2O)
+   { game->st_view.f8 = PLAYER2O; return 1; }
+   if (game->st_view.f7 == PLAYER2O && game->st_view.f8 == PLAYER2O && game->st_view.f9 == EMPTY)
+   { game->st_view.f9 = PLAYER2O; return 1; }
+
+
+   // check columns:
+   // first column:
+   if (game->st_view.f1 == EMPTY && game->st_view.f4 == PLAYER2O && game->st_view.f7 == PLAYER2O)
+   { game->st_view.f1 = PLAYER2O; return 1; }
+   if (game->st_view.f1 == PLAYER2O && game->st_view.f4 == EMPTY && game->st_view.f7 == PLAYER2O)
+   { game->st_view.f4 = PLAYER2O; return 1; }
+   if (game->st_view.f1 == PLAYER2O && game->st_view.f4 == PLAYER2O && game->st_view.f7 == EMPTY)
+   { game->st_view.f7 = PLAYER2O; return 1; }
+   // second column:
+   if (game->st_view.f2 == EMPTY && game->st_view.f5 == PLAYER2O && game->st_view.f8 == PLAYER2O)
+   { game->st_view.f2 = PLAYER2O; return 1; }
+   if (game->st_view.f5 == PLAYER2O && game->st_view.f5 == EMPTY && game->st_view.f8 == PLAYER2O)
+   { game->st_view.f5 = PLAYER2O; return 1; }
+   if (game->st_view.f2 == PLAYER2O && game->st_view.f5 == PLAYER2O && game->st_view.f8 == EMPTY)
+   { game->st_view.f8 = PLAYER2O; return 1; }
+   // third column:
+   if (game->st_view.f3 == EMPTY && game->st_view.f6 == PLAYER2O && game->st_view.f9 == PLAYER2O)
+   { game->st_view.f3 = PLAYER2O; return 1; }
+   if (game->st_view.f3 == PLAYER2O && game->st_view.f6 == EMPTY && game->st_view.f9 == PLAYER2O)
+   { game->st_view.f6 = PLAYER2O; return 1; }
+   if (game->st_view.f3 == PLAYER2O && game->st_view.f6 == PLAYER2O && game->st_view.f9 == EMPTY)
+   { game->st_view.f9 = PLAYER2O; return 1; }
+
+
+   // check cross:
+   // upper-left to lower-right:
+   if (game->st_view.f1 == EMPTY && game->st_view.f5 == PLAYER2O && game->st_view.f9 == PLAYER2O)
+   { game->st_view.f1 = PLAYER2O; return 1; }
+   if (game->st_view.f1 == PLAYER2O && game->st_view.f5 == EMPTY && game->st_view.f9 == PLAYER2O)
+   { game->st_view.f5 = PLAYER2O; return 1; }
+   if (game->st_view.f1 == PLAYER2O && game->st_view.f5 == PLAYER2O && game->st_view.f9 == EMPTY)
+   { game->st_view.f9 = PLAYER2O; return 1; }
+   // upper-right to lower-left:
+   if (game->st_view.f3 == EMPTY && game->st_view.f5 == PLAYER2O && game->st_view.f7 == PLAYER2O)
+   { game->st_view.f3 = PLAYER2O; return 1; }
+   if (game->st_view.f3 == PLAYER2O && game->st_view.f5 == EMPTY && game->st_view.f7 == PLAYER2O)
+   { game->st_view.f5 = PLAYER2O; return 1; }
+   if (game->st_view.f3 == PLAYER2O && game->st_view.f5 == PLAYER2O && game->st_view.f7 == EMPTY)
+   { game->st_view.f7 = PLAYER2O; return 1; }
+
+
+      // check opposite:
+   if (game->st_view.f5 == EMPTY)
+   {
+      // if position is PLAYER1X or PLAYER2O and opposite position is empty, occupy it with SET_O:
+      if (game->st_view.f1 == PLAYER1X && game->st_view.f9 == EMPTY) { game->st_view.f9 = SET_O; return 1; }
+      if (game->st_view.f2 == PLAYER1X && game->st_view.f8 == EMPTY) { game->st_view.f8 = SET_O; return 1; }
+      if (game->st_view.f3 == PLAYER1X && game->st_view.f7 == EMPTY) { game->st_view.f7 = SET_O; return 1; }
+      if (game->st_view.f4 == PLAYER1X && game->st_view.f6 == EMPTY) { game->st_view.f6 = SET_O; return 1; }
+      if (game->st_view.f6 == PLAYER1X && game->st_view.f4 == EMPTY) { game->st_view.f4 = SET_O; return 1; }
+      if (game->st_view.f7 == PLAYER1X && game->st_view.f3 == EMPTY) { game->st_view.f3 = SET_O; return 1; }
+      if (game->st_view.f8 == PLAYER1X && game->st_view.f2 == EMPTY) { game->st_view.f2 = SET_O; return 1; }
+      if (game->st_view.f9 == PLAYER1X && game->st_view.f1 == EMPTY) { game->st_view.f1 = SET_O; return 1; }
+   }
+
+
+   return 0;
+}
+
+
+/**
+
+class ComputerPlayer {				//game AI
+	XO xo;
+	private static int iax; // i axis
+	private static int jax; // j axis
+	private static int gameCount = 0;
+	private static Random r = new Random();
+
+	private ComputerPlayer() {}
+	public ComputerPlayer(XO game) {
+		xo = game;
+	}
+
+
+	private static int random() {
+		int result = -10;
+		while(true) {
+			result = Math.abs(r.nextInt()%10);
+			if(result != 0) return result;
+		}
+	}
+
+
+	private int positioner(int a, int b) {
+		int temporary = -5;
+	//	System.out.println("coord a: "+Integer.toString(a)+", coord b: "+Integer.toString(b));
+		if((a==0)&&(b==0)) temporary=7; 
+		if((a==0)&&(b==1)) temporary=8; 
+		if((a==0)&&(b==2)) temporary=9; 		
+		if((a==1)&&(b==0)) temporary=4; 
+		if((a==1)&&(b==1)) temporary=5; 
+		if((a==1)&&(b==2)) temporary=6;
+		if((a==2)&&(b==0)) temporary=1; 
+		if((a==2)&&(b==1)) temporary=2; 
+		if((a==2)&&(b==2)) temporary=3; 		
+		return temporary;
+	}
+
+
+	private static void oppositeResolver(int a, int b) {		//returns index of opposite field
+		switch(a) {
+			case 0 : {
+				switch(b) {
+					case 0 : iax=2; jax=2; break;
+					case 1 : iax=2; jax=1; break;
+					case 2 : iax=2; jax=0; break;
+				} break;
+			}
+			case 1 : {
+				switch(b) {
+					case 0 : iax=1; jax=2; break;
+               // skip center position 5 (1,1).
+					case 2 : iax=1; jax=0; break;
+				} break;
+			}
+			case 2 : {
+				switch(b) {
+					case 0 : iax=0; jax=2; break;
+					case 1 : iax=0; jax=1; break;
+					case 2 : iax=0; jax=0; break;
+				} break;
+			}					
+		}
+	}
+
+
+	private int compAllEmpty() {						//only useful if computer has first move
+		int check = -10;
+		for(int i=0; i<3; i++) {
+			for(int j=0; j<3; j++) {
+				if(xo.game[i][j] > -1) 
+               check = 10;
+			}
+		}
+		if(check == -10) 
+         return 5;
+
+		return -10;
+	}
+
+
+	private int compHor(int a, int b) {				//computer horisontal value checker
+		//a and b are values for players. if a==1, b==0 then that is computer, a==0, b==0 is for player
+		int val1 = -4; int val2 = -5; int val3 = -6;
+		for(int i=0; i<3; i++) {
+			for(int j=0; j<3; j++) {
+				switch(j) {
+					case 0 : val1 = xo.game[i][j];
+					case 1 : val2 = xo.game[i][j];
+					case 2 : val3 = xo.game[i][j];
+				}
+			}
+			if((val1 == a) && (val2 == a) && (val3 <  b)) return positioner (i, 2);	// 1 1 /
+			if((val1 <  b) && (val2 == a) && (val3 == a)) return positioner (i, 0);	// / 1 1
+			if((val1 == a) && (val2 <  b) && (val3 == a)) return positioner (i, 1);	// 1 / 1		
+		} return -11;
+	}
+
+
+	private int compVer(int a, int b) {				//computer vertical value checker
+		//a and b are values for players. if a==1, b==0 then that is computer, a==0, b==0 is for player	
+		int val1 = -4; int val2 = -5; int val3 = -6;
+		for(int i=0; i<3; i++) {
+			for(int j=0; j<3; j++) {
+				switch(j) {
+					case 0 : val1 = xo.game[j][i];
+					case 1 : val2 = xo.game[j][i];
+					case 2 : val3 = xo.game[j][i];
+				}
+			}
+			if((val1==a)&&(val2==a)&&(val3<b)) return positioner(2, i);
+			if((val1<b)&&(val2==a)&&(val3==a)) return positioner(0, i);
+			if((val1==a)&&(val2<b)&&(val3==a)) return positioner(1, i);
+		} return -12;
+	}
+
+
+	private int compCross() {			//check cross values. if there are two in same row/line
+		int val1 = -4; int val2 = -5; int val3 = -6;
+		for(int i=0; i<3; i++) {
+			int j = 2-i;
+			switch(i) {
+				case 0 : val3 = xo.game[i][j];
+				case 1 : val2 = xo.game[i][j];
+				case 2 : val1 = xo.game[i][j];
+			}
+		}
+		if((val1==1)&&(val2==1)&&(val3<0)) return positioner(2, 0);
+		if((val1<0)&&(val2==1)&&(val3==1)) return positioner(0, 2);
+		if((val1==1)&&(val2<0)&&(val3==1)) return positioner(1, 1);	
+		for(int i=0; i<3; i++) {
+			int j = i;
+			switch(i) {
+				case 0 : val1 = xo.game[i][j];
+				case 1 : val2 = xo.game[i][j];
+				case 2 : val3 = xo.game[i][j];
+			}
+		}
+		if((val1==1)&&(val2==1)&&(val3<0)) return positioner(2, 2);
+		if((val1<0)&&(val2==1)&&(val3==1)) return positioner(0, 0);
+		if((val1==1)&&(val2<0)&&(val3==1)) return positioner(1, 1);					
+		return -13;		
+	}
+
+
+	private int compOpp() {				//method return opposite value. eg. opposite of 9 is 1
+	//	System.out.println("compOpp() method invoked"); 	// -- for debugging
+		if((xo.game[1][1]==1) && gameCount==1)
+			while(true){
+				int r = random();			//countermeasure against returning same field, 5
+				if(r != 5) return r; 
+			//	break;
+			}
+		int location = -10;
+		for(int i=0; i<3; i++) {
+			for(int j=0; j<3; j++) { 	//		System.out.println("i val: "+i+", j val: "+j);
+				oppositeResolver(i, j);	//static method. calculate indexes of opposite locations
+				if((xo.game[i][j]==1) && (xo.game[iax][jax] < 0) && xo.game[1][1] < 0) {
+				//	System.out.println(Integer.toString(10-positioner(i, j)));
+					return 10-positioner(i, j);
+				}
+			}
+		}
+	//	System.out.println("compOpp() ended");
+	//	int value = random();
+	//	System.out.println("compOne() random(): "+value);
+		return -14;
+	}
+
+
+	public int computer(){
+		gameCount++;
+		int keyNumber = 0;
+		
+      if(compAllEmpty() > -1) { keyNumber = 5; return keyNumber; }
+		if(compHor(0, 0) > -1)  { keyNumber = compHor(0, 0); return keyNumber; }	//checks player(0) h positions
+		if(compVer(0, 0) > -1)  { keyNumber = compVer(0, 0); return keyNumber; }	//checks player(0) v positions
+		if(compHor(1, 0) > -1)  { keyNumber = compVer(1, 0); return keyNumber; }
+		if(compVer(1, 0) > -1)  { keyNumber = compVer(1, 0); return keyNumber; }
+		if(compCross() > -1)    { keyNumber = compCross(); return keyNumber; }
+		if(compOpp() > -1)      { keyNumber = compOpp(); return keyNumber; }
+		
+      return random();			// random() will return values 1..9
+	}
+} // end-class
+*/
+
+
+
+
+
+
+
+   // if position is PLAYER1X or PLAYER2O and opposite position is empty, occupy it with SET_O:
+   /**
+   for (i = 0; i < FIELDS; i++)
+   {
+      if (i == 4)    // skip center field.
+         continue;
+
+      if (((game->ui_view >> (i * 2)) & PLAYER2O) == PLAYER2O)
+         continue;
+
+      offset = (FIELDS-1 - i) * 2;
+      if (((game->ui_view >> (i * 2)) & PLAYER1X) == PLAYER1X)
+      {
+         if (((game->ui_view >> offset) | EMPTY) == EMPTY) 
+         {
+            //offset = (FIELDS-1 - i) * 2;
+            holder = game->ui_view;
+            game->ui_view = game->ui_view >> offset;
+            game->ui_view |=  SET_O;
+            game->ui_view = game->ui_view << offset;
+            game->ui_view |=  holder;
+
+            return 1;
+         }
+      }
+      
+   }*/
+
+
+
+
+/*
+      // empty buffer:
+      //memset (buffer, '*', _countof (buffer));
+      // load data to buffer:
+      //strcpy (buffer, _countof (buffer), itobs());
+      //itobs (game->ui_view, buffer);
+*/
+
+
+
+
+
+/**
+   // increment i is how much bits to shift to get to positions 1 (0), 4 (6), 7 (12)
+   for (i = 0; i < 13; i += 6)
+   {
+      if ( (((game->ui_view >> (i + 0)) & PLAYER2O) == PLAYER2O) && 
+           (((game->ui_view >> (i + 2)) & PLAYER2O) == PLAYER2O) && 
+           (((game->ui_view >> (i + 4)) | EMPTY) != EMPTY) )
+      {
+         holder = game->ui_view;
+         game->ui_view = game->ui_view >> (i + 4);
+         game->ui_view |=  SET_O;
+         game->ui_view = game->ui_view << (i + 4);
+         game->ui_view |=  holder;
+         return 1;
+      }
+   }*/

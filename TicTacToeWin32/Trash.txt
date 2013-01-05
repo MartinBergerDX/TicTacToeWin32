@@ -1,0 +1,27 @@
+// before eliminating Player/AI turn:
+/**
+         // if field is not X or O, it is empty, so proceed:
+         if((((game.ui_view >> offset) & PLAYER1X) != PLAYER1X) && (((game.ui_view >> offset) & PLAYER2O) != PLAYER2O)) 
+         {
+            // 0 == human player
+            // 1 == AI player
+            // default is player
+            if((game.ui_view & PLAYER_AI) == PLAYER_AI)
+            {
+               // AI turn.
+               // process AI here:
+               // game union must be intact!
+               processAI (&game); // modifies game union object
+            }
+            else 
+            {
+               // user turn.
+               holder = game.ui_view;    // save whole game
+               game.ui_view >>= offset;  // shift to current field
+
+               game.ui_view |= SETX;     // set field to X value
+
+               game.ui_view <<= offset;  // shift to normal position
+               game.ui_view |= holder;   // restore field
+            }
+*/

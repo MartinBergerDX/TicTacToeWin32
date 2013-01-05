@@ -1,0 +1,187 @@
+/**
+
+class ComputerPlayer {				//game AI
+	XO xo;
+	private static int iax; // i axis
+	private static int jax; // j axis
+	private static int gameCount = 0;
+	private static Random r = new Random();
+
+	private ComputerPlayer() {}
+	public ComputerPlayer(XO game) {
+		xo = game;
+	}
+
+
+	private static int random() {
+		int result = -10;
+		while(true) {
+			result = Math.abs(r.nextInt()%10);
+			if(result != 0) return result;
+		}
+	}
+
+
+	private int positioner(int a, int b) {
+		int temporary = -5;
+	//	System.out.println("coord a: "+Integer.toString(a)+", coord b: "+Integer.toString(b));
+		if((a==0)&&(b==0)) temporary=7; 
+		if((a==0)&&(b==1)) temporary=8; 
+		if((a==0)&&(b==2)) temporary=9; 		
+		if((a==1)&&(b==0)) temporary=4; 
+		if((a==1)&&(b==1)) temporary=5; 
+		if((a==1)&&(b==2)) temporary=6;
+		if((a==2)&&(b==0)) temporary=1; 
+		if((a==2)&&(b==1)) temporary=2; 
+		if((a==2)&&(b==2)) temporary=3; 		
+		return temporary;
+	}
+
+
+	private static void oppositeResolver(int a, int b) {		//returns index of opposite field
+		switch(a) {
+			case 0 : {
+				switch(b) {
+					case 0 : iax=2; jax=2; break;
+					case 1 : iax=2; jax=1; break;
+					case 2 : iax=2; jax=0; break;
+				} break;
+			}
+			case 1 : {
+				switch(b) {
+					case 0 : iax=1; jax=2; break;
+               // skip center position 5 (1,1).
+					case 2 : iax=1; jax=0; break;
+				} break;
+			}
+			case 2 : {
+				switch(b) {
+					case 0 : iax=0; jax=2; break;
+					case 1 : iax=0; jax=1; break;
+					case 2 : iax=0; jax=0; break;
+				} break;
+			}					
+		}
+	}
+
+
+	private int compAllEmpty() {						//only useful if computer has first move
+		int check = -10;
+		for(int i=0; i<3; i++) {
+			for(int j=0; j<3; j++) {
+				if(xo.game[i][j] > -1) 
+               check = 10;
+			}
+		}
+		if(check == -10) 
+         return 5;
+
+		return -10;
+	}
+
+
+	private int compHor(int a, int b) {				//computer horisontal value checker
+		//a and b are values for players. if a==1, b==0 then that is computer, a==0, b==0 is for player
+		int val1 = -4; int val2 = -5; int val3 = -6;
+		for(int i=0; i<3; i++) {
+			for(int j=0; j<3; j++) {
+				switch(j) {
+					case 0 : val1 = xo.game[i][j];
+					case 1 : val2 = xo.game[i][j];
+					case 2 : val3 = xo.game[i][j];
+				}
+			}
+			if((val1 == a) && (val2 == a) && (val3 <  b)) return positioner (i, 2);	// 1 1 /
+			if((val1 <  b) && (val2 == a) && (val3 == a)) return positioner (i, 0);	// / 1 1
+			if((val1 == a) && (val2 <  b) && (val3 == a)) return positioner (i, 1);	// 1 / 1		
+		} return -11;
+	}
+
+
+	private int compVer(int a, int b) {				//computer vertical value checker
+		//a and b are values for players. if a==1, b==0 then that is computer, a==0, b==0 is for player	
+		int val1 = -4; int val2 = -5; int val3 = -6;
+		for (int i=0; i<3; i++) {
+			for (int j=0; j<3; j++) {
+				switch (j) {
+					case 0 : val1 = xo.game[j][i];
+					case 1 : val2 = xo.game[j][i];
+					case 2 : val3 = xo.game[j][i];
+				}
+			}
+			if ((val1==a) && (val2==a) && (val3<b))  return positioner(2, i);
+			if ((val1<b)  && (val2==a) && (val3==a)) return positioner(0, i);
+			if ((val1==a) && (val2<b)  && (val3==a)) return positioner(1, i);
+		} return -12;
+	}
+
+
+	private int compCross() {			//check cross values. if there are two in same row/line
+		int val1 = -4; int val2 = -5; int val3 = -6;
+		for(int i=0; i<3; i++) {
+			int j = 2-i;
+			switch(i) {
+				case 0 : val3 = xo.game[i][j];
+				case 1 : val2 = xo.game[i][j];
+				case 2 : val1 = xo.game[i][j];
+			}
+		}
+		if((val1==1)&&(val2==1)&&(val3<0)) return positioner(2, 0);
+		if((val1<0)&&(val2==1)&&(val3==1)) return positioner(0, 2);
+		if((val1==1)&&(val2<0)&&(val3==1)) return positioner(1, 1);	
+		for(int i=0; i<3; i++) {
+			int j = i;
+			switch(i) {
+				case 0 : val1 = xo.game[i][j];
+				case 1 : val2 = xo.game[i][j];
+				case 2 : val3 = xo.game[i][j];
+			}
+		}
+		if((val1==1)&&(val2==1)&&(val3<0)) return positioner(2, 2);
+		if((val1<0)&&(val2==1)&&(val3==1)) return positioner(0, 0);
+		if((val1==1)&&(val2<0)&&(val3==1)) return positioner(1, 1);					
+		return -13;		
+	}
+
+
+	private int compOpp() {				//method return opposite value. eg. opposite of 9 is 1
+	//	System.out.println("compOpp() method invoked"); 	// -- for debugging
+		if((xo.game[1][1]==1) && gameCount==1)
+			while(true){
+				int r = random();			//countermeasure against returning same field, 5
+				if(r != 5) return r; 
+			//	break;
+			}
+		int location = -10;
+		for(int i=0; i<3; i++) {
+			for(int j=0; j<3; j++) { 	//		System.out.println("i val: "+i+", j val: "+j);
+				oppositeResolver(i, j);	//static method. calculate indexes of opposite locations
+				if((xo.game[i][j]==1) && (xo.game[iax][jax] < 0) && xo.game[1][1] < 0) {
+				//	System.out.println(Integer.toString(10-positioner(i, j)));
+					return 10-positioner(i, j);
+				}
+			}
+		}
+	//	System.out.println("compOpp() ended");
+	//	int value = random();
+	//	System.out.println("compOne() random(): "+value);
+		return -14;
+	}
+
+
+	public int computer(){
+		gameCount++;
+		int keyNumber = 0;
+		
+      if(compAllEmpty() > -1) { keyNumber = 5; return keyNumber; }
+		if(compHor(0, 0) > -1)  { keyNumber = compHor(0, 0); return keyNumber; }	//checks player(0) h positions
+		if(compVer(0, 0) > -1)  { keyNumber = compVer(0, 0); return keyNumber; }	//checks player(0) v positions
+		if(compHor(1, 0) > -1)  { keyNumber = compVer(1, 0); return keyNumber; }
+		if(compVer(1, 0) > -1)  { keyNumber = compVer(1, 0); return keyNumber; }
+		if(compCross() > -1)    { keyNumber = compCross(); return keyNumber; }
+		if(compOpp() > -1)      { keyNumber = compOpp(); return keyNumber; }
+		
+      return random();			// random() will return values 1..9
+	}
+} // end-class
+*/
